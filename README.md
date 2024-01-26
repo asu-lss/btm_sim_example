@@ -1,18 +1,18 @@
 ## Example cylinder telescope simulation
 
-This directory contains the ingredients to run a sample simulation on Cedar, including generating telescope products (beam transfer matrices, telescope-SVD basis vectors, double-KL basis vectors, and power spectrum Fisher matrices) and simulated data. The telescope configuration is Simon's "half-pathfinder" (e.g. [doclib #1256](https://bao.chimenet.ca/doc/documents/1256)).
+This directory contains the ingredients to run a sample simulation on Cedar, including generating telescope products (beam transfer matrices, telescope-SVD basis vectors, double-KL basis vectors, and power spectrum Fisher matrices) and simulated data. The telescope configuration is a down-scaled version of the CHIME pathfinder.
 
-To proceed, copy this directory to your scratch or project space on Cedar, and make sure you can load a CHIME environment with the standard [radiocosmology](https://github.com/radiocosmology/) packages (`caput`, `cora`, `draco`, `driftscan`). You'll have to edit file paths in some files, as indicated below. (This could be done more intelligently using environment variables...but I'll leave that as an exercise!)
+To proceed, copy this directory to your scratch or project space on Cedar, and make sure you can load a CHIME/CHORD environment with the standard [radiocosmology](https://github.com/radiocosmology/) packages (`caput`, `cora`, `draco`, `driftscan`). You'll have to edit file paths in some files, as indicated below. (This could be done more intelligently using environment variables...but I'll leave that as an exercise!)
 
-Please let Simon know if you encounter any issues!
+This tutorial is infrequently updated and may break with updated radiocosmology packages. Please let Simon know if you encounter any issues!
 
 ### Generating telescope products
 
-1. In `bt.yaml`, edit `output_directory` so that it points to your own `ch_scripts/sim_example/sim_output/products/` directory, and also edit `venv` to point to your Python virtual environment directory. From the command line, execute `slurm_generate_telescope_products.sh`. This uses the `drift-makeproducts` script in `driftscan` to submit a job to cedar's batch queue that generates telescope beam transfer matrices, SVD compressions of those matrices, KL basis vectors, and power spectrum Fisher matrices, using the config in `bt.yaml`.
+1. In `bt.yaml`, edit `output_directory` so that it points to your own `btm_sim_example/sim_output/products/` directory, and also edit `venv` to point to your Python virtual environment directory. From the command line, execute `slurm_generate_telescope_products.sh`. This uses the `drift-makeproducts` script in `driftscan` to submit a job to cedar's batch queue that generates telescope beam transfer matrices, SVD compressions of those matrices, KL basis vectors, and power spectrum Fisher matrices, using the config in `bt.yaml`.
 
 ### Generating simulated data
 
-1. Submit an interactive job to cedar by running, e.g., `salloc --time=1:00:0 --nodes=1 --ntasks-per-node=1 --cpus-per-task=48 --mem=0 --account=rpp-chime --job-name=maps`. This will log you into a cedar compute node. From here, activate the standard CHIME modules and your own virtual environment, then run `generate_input_maps.sh` from the command line. This will use `cora` to generate simulated 21cm and foreground maps inside `sim_output/cora_maps/`. This should only take a few minutes, and you can exit the interactive job afterwards by logging out of your node.
+1. Submit an interactive job to cedar by running, e.g., `salloc --time=1:00:0 --nodes=1 --ntasks-per-node=1 --cpus-per-task=48 --mem=0 --account=ACCT --job-name=maps`, where `ACCT` is `rpp-chime` for CHIME or `rrg-kmsmith` for CHORD. This will log you into a cedar compute node. From here, activate the standard CHIME/CHORD modules and your own virtual environment, then run `generate_input_maps.sh` from the command line. This will use `cora` to generate simulated 21cm and foreground maps inside `sim_output/cora_maps/`. This should only take a few minutes, and you can exit the interactive job afterwards by logging out of your node.
 
 2. In `sstream.yaml`, edit the venv location and the path to your simulation output directory, then run `slurm_gen_sstreams.sh` from the command line. This uses the `caput-pipeline` script in `caput` to submit a job to cedar's batch queue that computes simulated sidereal streams based on the sky maps generated above, using the config in `sstream.yaml`.
 
@@ -23,7 +23,7 @@ The notebook `plotting_power_spectrum.ipynb` demonstrates how to use routines in
 
 ### Generating simulated data corrupted by beam width perturbations
 
-1. In `bt_pert.yaml`, edit `output_directory` so that it points to your own `ch_scripts/sim_example/sim_output/products_pert/` directory, and also edit `venv` to point to your Python virtual environment directory. From the command line, execute `slurm_generate_perturbed_telescope_products.sh`.
+1. In `bt_pert.yaml`, edit `output_directory` so that it points to your own `btm_sim_example/sim_output/products_pert/` directory, and also edit `venv` to point to your Python virtual environment directory. From the command line, execute `slurm_generate_perturbed_telescope_products.sh`.
 
 2. In `slurm_gen_sstream_pert_step1.sh`, edit the venv location and the path to your simulation output directory, then run `slurm_gen_sstream_pert_step1.sh` from the command line. This submits a batch job that simulates a sidereal stream that separately includes an unperturbed piece and a piece corresponding to beam-width perturbations, using the config in `sstream_pert_step1.yaml`.
 
