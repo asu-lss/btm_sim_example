@@ -1,0 +1,89 @@
+# General config settings
+config:
+    beamtransfers:      No
+    kltransform:        Yes
+    psfisher:           Yes
+
+    skip_svd:           Yes
+    
+    nosvd:              Yes
+
+    ## Directory to store output in. Change to your own copy of ch_scripts.
+    output_directory:   /scratch/sforeman/ch_scripts/sim_example/sim_output/products_nosvd/
+
+    ## Settings if running through "drift-makeproducts queue"
+    name:               bt                      # Jobname
+    nodes:              4                       # Number of nodes to run on
+    time:               540                     # Time to run for (in minutes)
+    ompnum:             8                       # Number of OpenMP threads per MPI task
+    pernode:            6                       # Number of MPI tasks per node
+    queue:              batch                   # If set, submit to an alternative queue (e.g debug)
+    account:            rpp-chime
+    queue_sys:          slurm
+    venv:               /home/sforeman/sim_test_env/venv/    ## Change to your own venv.
+
+
+# Telescope settings
+telescope:
+    type: PolarisedCylinder
+
+    freq_lower: 400.0
+    freq_upper: 500.0
+    num_freq: 20
+
+    cylinder_width: 20.0
+    num_feeds: 32
+    feed_spacing: 0.6
+    num_cylinders: 2
+
+    tsys:                 50.0     # K
+    ndays:                18250
+
+    auto_correlations: False
+
+    accuracy_boost: 1.0
+    
+    longitude: 0.0
+    latitude: 49.0
+
+
+# KL transform settings
+kltransform:
+
+    # Can compute multiple versions of KL transform, each with its own entry here
+    - type: DoubleKL               # KLTransform for single-KL, or DoubleKL for double-KL
+      name: dk10_0.1
+      use_polarised: Yes
+      subset: Yes                  # Whether to only save subset of KL modes above threshold
+      foreground_threshold: 10.    # S/F threshold for step 1 of double KL
+      threshold: 0.1               # S/(F+N) threshold for step 2 of double KL
+      inverse: No                  # Whether to save inverse of KL projection matrix
+
+
+# Settings for power spectrum k bands
+bands: &bands
+
+    kpar_bands:
+        - spacing: linear
+          start: 0.0
+          stop: 0.25
+          num: 26                  # Number of bands in each direction will be num - 1
+
+    kperp_bands:
+        - spacing: linear
+          start: 0.0
+          stop: 0.1
+          num: 11
+
+
+# Settings for power spectrum and Fisher matrices
+psfisher:
+
+    - type: MonteCarlo             # Specifies that we'll compute the Fisher matrix via Monte Carlo
+      name: ps10_0.1
+      klname: dk10_0.1
+      bandtype: cartesian
+      nsamples: 10000              # Number of Monte Carlo samples to use in Fisher calculation
+      unit_bands: False
+      << : *bands
+

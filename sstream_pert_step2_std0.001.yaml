@@ -1,0 +1,75 @@
+cluster:
+    name: sim_ex_stream_pert2
+    time: 30
+    directory: {sim_out_dir}streams/
+    system: cedar
+    nodes: 1
+    ompnum: 2
+    pernode: 24
+    mem: 0
+    venv: {venv_dir}
+    queue: batch
+    account: rpp-chime
+    queue_sys: slurm
+
+
+pipeline:
+
+    tasks:
+
+        - type: draco.core.task.SetMPILogging
+          params:
+              level_rank0: DEBUG
+              level_all: INFO
+
+        - type: draco.core.io.LoadProductManager
+          out: manager
+          params:
+              product_directory: {sim_out_dir}products_pert/
+              
+        - type: draco.core.io.LoadProductManager
+          out: manager_unpert
+          params:
+              product_directory: {sim_out_dir}products/
+
+
+
+        - type: draco.core.io.LoadFilesFromParams
+          out: sstream_21cmfg_pert
+          params:
+              files:
+                  - "{sim_out_dir}streams/stream_pert_21cm_and_fg.h5"
+
+        - type: draco.synthesis.expand_perturbed.ExpandPerturbedProducts
+          requires: manager
+          in: sstream_21cmfg_pert
+          out: sstream_21cmfg_exp
+          params:
+              save: Yes
+              pert_val: 0.001
+              tag: "21cm_and_fg"
+              output_name: "{sim_out_dir}streams/stream_expanded_pert_std0.001_{{tag}}.h5"
+
+        - type: draco.analysis.transform.CollateProducts
+          requires: manager_unpert
+          in: sstream_21cmfg_exp
+          out: sstack_21cmfg_coll
+          params:
+              weight: 'inverse_variance'
+              save: Yes
+              tag: "21cm_and_fg"
+              output_name: "{sim_out_dir}streams/stream_pert_std0.001_{{tag}}.h5"
+
+        - type: draco.synthesis.noise.GaussianNoise
+          requires: manager_unpert
+          in: sstack_21cmfg_coll
+          out: sstack_wnoise_21cmfg_coll
+          params:
+              recv_temp: 50.0
+              ndays: 18250
+              seed: 0
+              save: Yes
+              tag: "gnoise_21cm_and_fg"
+              output_name: "{sim_out_dir}streams/stream_pert_std0.001_{{tag}}.h5"
+
+

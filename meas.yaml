@@ -1,0 +1,84 @@
+cluster:
+    name: sim_ex_meas
+    time: 20
+    directory: {sim_out_dir}meas/
+    system: cedar
+    nodes: 1
+    ompnum: 2
+    pernode: 24
+    mem: 0
+    venv: {venv_dir}
+    queue: batch
+    account: rpp-chime
+    queue_sys: slurm
+    
+
+pipeline:
+
+    logging:
+        root: INFO
+
+    tasks:
+
+        - type: draco.core.task.SetMPILogging
+          params:
+              level_rank0: DEBUG
+              level_all: INFO
+
+        - type: draco.core.io.LoadProductManager
+          out: manager
+          params:
+              product_directory: {sim_out_dir}products/
+
+        - type: draco.core.io.LoadFilesFromParams
+          out: sstream_21cmfg
+          params:
+              files:
+                  - "{sim_out_dir}streams/stream_gnoise_21cm_and_fg.h5"
+
+        # Convert sidereal stream to m-modes
+        - type: draco.analysis.transform.MModeTransform
+          in: sstream_21cmfg
+          out: mmodes_21cmfg
+          params:
+              save: Yes
+              tag: "gnoise_21cm_and_fg"
+              output_name: "{sim_out_dir}meas/mmodes_{{tag}}.h5"
+              
+        # Project m-modes into telescope-SVD modes
+        - type: draco.analysis.fgfilter.SVDModeProject
+          requires: manager
+          in: mmodes_21cmfg
+          out: svdmodes_21cmfg
+          params:
+              mode: forward
+              save: Yes
+              tag: "gnoise_21cm_and_fg"
+              output_name: "{sim_out_dir}meas/svdmodes_{{tag}}.h5"
+
+        # Project telescope-SVD modes into KL modes
+        - type: draco.analysis.fgfilter.KLModeProject
+          requires: manager
+          in: svdmodes_21cmfg
+          out: dk10_0.1_modes_21cmfg
+          params:
+              mode: forward
+              klname: dk10_0.1
+              threshold: 0.1
+              save: Yes
+              tag: "gnoise_21cm_and_fg"
+              output_name: "{sim_out_dir}meas/dk10_0.1_modes_{{tag}}.h5"
+              
+        # Measure power spectrum from KL modes
+        - type: draco.analysis.powerspectrum.QuadraticPSEstimation
+          requires: manager
+          in: dk10_0.1_modes_21cmfg
+          out: ps_dk10_0.1_modes_21cmfg
+          params:
+              psname: ps10_0.1
+              pstype: minimum_variance
+              save: Yes
+              tag: "gnoise_21cm_and_fg"
+              output_name: "{sim_out_dir}meas/ps_dk10_0.1_{{tag}}.h5"
+ 
+ 

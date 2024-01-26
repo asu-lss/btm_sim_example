@@ -1,0 +1,60 @@
+cluster:
+    name: sim_ex_stream
+    time: 10
+    directory: {sim_out_dir}streams/
+    system: cedar
+    nodes: 1
+    ompnum: 2
+    pernode: 24
+    mem: 0
+    venv: {venv_dir}
+    queue: batch
+    account: rpp-chime
+    queue_sys: slurm
+
+
+pipeline:
+
+    logging:
+        root: INFO
+
+    tasks:
+
+        - type: draco.core.task.SetMPILogging
+          params:
+              level_rank0: DEBUG
+              level_all: INFO
+
+        - type: draco.core.io.LoadProductManager
+          out: manager
+          params:
+              product_directory: {sim_out_dir}products/
+
+        - type: draco.core.io.LoadMaps
+          out: map_21cmfg
+          params:
+              maps:
+                - files:
+                    - "{sim_out_dir}cora_maps/in_map_21cm.h5"
+                    - "{sim_out_dir}cora_maps/in_map_fg.h5"
+
+        - type: draco.synthesis.stream.SimulateSidereal
+          requires: manager
+          in: map_21cmfg
+          out: sstack_21cmfg
+          params:
+              save: Yes
+              tag: "21cm_and_fg"
+              output_name: "{sim_out_dir}streams/stream_{{tag}}.h5"
+
+        - type: draco.synthesis.noise.GaussianNoise
+          requires: manager
+          in: sstack_21cmfg
+          out: sstack_wnoise_21cmfg
+          params:
+              save: Yes
+              tag: "gnoise_21cm_and_fg"
+              output_name: "{sim_out_dir}streams/stream_{{tag}}.h5"
+              recv_temp: 50.0
+              ndays: 18250
+              seed: 0

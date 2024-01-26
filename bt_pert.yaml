@@ -1,0 +1,48 @@
+# General config settings
+config:
+    # We only need the perturbed BTM to simulate beam perturbations, so we don't
+    # generate anything else
+    beamtransfers:      Yes
+    kltransform:        No
+    psfisher:           No
+
+    skip_svd:           Yes
+
+    ## Directory to store output in
+    output_directory:   /scratch/sforeman/ch_scripts/sim_example/sim_output/products_pert/
+
+    ## Settings if running through "drift-makeproducts queue"
+    name:               bt_pert                 # Jobname
+    nodes:              4                       # Number of nodes to run on
+    time:               120                     # Time to run for (in minutes)
+    ompnum:             4                       # Number of OpenMP threads per MPI task
+    pernode:            12                      # Number of MPI tasks per node
+    queue:              batch                   # If set, submit to an alternative queue (e.g debug)
+    account:            rpp-chime
+    queue_sys:          slurm
+    venv:               /home/sforeman/sim_test_env/venv/    ## Change to your own venv.
+
+
+# Telescope settings
+telescope:
+    type: PertCylinder
+
+    freq_lower: 400.0
+    freq_upper: 500.0
+    num_freq: 20
+
+    cylinder_width: 20.0
+    num_feeds: 32
+    feed_spacing: 0.6
+    num_cylinders: 2
+
+    tsys:                 50.0     # K
+    ndays:                18250
+
+    auto_correlations: False
+
+    accuracy_boost: 1.0
+    
+    longitude: 0.0
+    latitude: 49.0
+

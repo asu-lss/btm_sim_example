@@ -1,0 +1,1 @@
+This directory will store simulated sky maps from `cora`.
